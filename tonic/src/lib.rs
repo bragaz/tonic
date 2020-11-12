@@ -82,7 +82,7 @@ pub mod codec;
 pub mod metadata;
 pub mod server;
 
-#[cfg(feature = "transport")]
+#[cfg(any(feature = "transport", feature = "client"))]
 #[cfg_attr(docsrs, doc(cfg(feature = "transport")))]
 pub mod transport;
 

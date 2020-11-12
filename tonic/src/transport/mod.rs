@@ -87,7 +87,25 @@
 //! [rustls]: https://docs.rs/rustls/0.16.0/rustls/
 
 pub mod channel;
+#[cfg(feature = "transport")]
 pub mod server;
+
+/// Trait that connected IO resources implement.
+///
+/// The goal for this trait is to allow users to implement
+/// custom IO types that can still provide the same connection
+/// metadata.
+pub trait Connected {
+    /// Return the remote address this IO resource is connected too.
+    fn remote_addr(&self) -> Option<std::net::SocketAddr> {
+        None
+    }
+
+    /// Return the set of connected peer TLS certificates.
+    fn peer_certs(&self) -> Option<Vec<Certificate>> {
+        None
+    }
+}
 
 mod error;
 mod service;
@@ -96,6 +114,7 @@ mod tls;
 #[doc(inline)]
 pub use self::channel::{Channel, Endpoint};
 pub use self::error::Error;
+#[cfg(feature = "transport")]
 #[doc(inline)]
 pub use self::server::{NamedService, Server};
 pub use self::tls::{Certificate, Identity};
@@ -105,6 +124,7 @@ pub use hyper::{Body, Uri};
 #[cfg_attr(docsrs, doc(cfg(feature = "tls")))]
 pub use self::channel::ClientTlsConfig;
 #[cfg(feature = "tls")]
+#[cfg(feature = "transport")]
 #[cfg_attr(docsrs, doc(cfg(feature = "tls")))]
 pub use self::server::ServerTlsConfig;
 

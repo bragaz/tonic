@@ -6,7 +6,7 @@ mod incoming;
 #[cfg_attr(docsrs, doc(cfg(feature = "tls")))]
 mod tls;
 
-pub use conn::Connected;
+pub use super::Connected;
 #[cfg(feature = "tls")]
 pub use tls::ServerTlsConfig;
 

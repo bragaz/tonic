@@ -9,7 +9,9 @@ pub use endpoint::Endpoint;
 #[cfg(feature = "tls")]
 pub use tls::ClientTlsConfig;
 
-use super::service::{Connection, DynamicServiceStream};
+use super::service::Connection;
+#[cfg(feature = "transport")]
+use super::service::DynamicServiceStream;
 use crate::body::BoxBody;
 use bytes::Bytes;
 use http::{
@@ -17,22 +19,25 @@ use http::{
     Request, Response,
 };
 use hyper::client::connect::Connection as HyperConnection;
+#[cfg(feature = "transport")]
+use std::hash::Hash;
 use std::{
     fmt,
     future::Future,
-    hash::Hash,
     pin::Pin,
     task::{Context, Poll},
 };
-use tokio::{
-    io::{AsyncRead, AsyncWrite},
-    sync::mpsc::{channel, Sender},
-};
 
+use tokio::io::{AsyncRead, AsyncWrite};
+#[cfg(feature = "transport")]
+use tokio::sync::mpsc::{channel, Sender};
+
+#[cfg(feature = "transport")]
 use tower::balance::p2c::Balance;
+#[cfg(feature = "transport")]
+use tower::discover::{Change, Discover};
 use tower::{
     buffer::{self, Buffer},
-    discover::{Change, Discover},
     util::{BoxService, Either},
     Service,
 };
@@ -108,6 +113,7 @@ impl Channel {
     ///
     /// This creates a [`Channel`] that will load balance accross all the
     /// provided endpoints.
+    #[cfg(feature = "transport")]
     pub fn balance_list(list: impl Iterator<Item = Endpoint>) -> Self {
         let (channel, tx) = Self::balance_channel(DEFAULT_BUFFER_SIZE);
         list.for_each(|endpoint| {
@@ -121,6 +127,7 @@ impl Channel {
     /// Balance a list of [`Endpoint`]'s.
     ///
     /// This creates a [`Channel`] that will listen to a stream of change events and will add or remove provided endpoints.
+    #[cfg(feature = "transport")]
     pub fn balance_channel<K>(capacity: usize) -> (Self, Sender<Change<K, Endpoint>>)
     where
         K: Hash + Eq + Send + Clone + 'static,
@@ -130,6 +137,7 @@ impl Channel {
         (Self::balance(list, DEFAULT_BUFFER_SIZE), tx)
     }
 
+    #[cfg(feature = "transport")]
     pub(crate) fn new<C>(connector: C, endpoint: Endpoint) -> Self
     where
         C: Service<Uri> + Send + 'static,
@@ -162,6 +170,7 @@ impl Channel {
         Ok(Channel { svc })
     }
 
+    #[cfg(feature = "transport")]
     pub(crate) fn balance<D>(discover: D, buffer_size: usize) -> Self
     where
         D: Discover<Service = Connection> + Unpin + Send + 'static,

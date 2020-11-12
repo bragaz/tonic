@@ -27,6 +27,22 @@ pub(crate) struct Connection {
     inner: BoxService<Request, Response, crate::Error>,
 }
 
+#[cfg(target_arch = "wasm32")]
+mod wasm {
+    use std::future::Future;
+    use std::pin::Pin;
+
+    type BoxSendFuture = Pin<Box<dyn Future<Output = ()> + Send>>;
+
+    pub(crate) struct Executor;
+
+    impl hyper::rt::Executor<BoxSendFuture> for Executor {
+        fn execute(&self, fut: BoxSendFuture) {
+            wasm_bindgen_futures::spawn_local(fut)
+        }
+    }
+}
+
 impl Connection {
     fn new<C>(connector: C, endpoint: Endpoint, is_lazy: bool) -> Self
     where
@@ -35,20 +51,28 @@ impl Connection {
         C::Future: Unpin + Send,
         C::Response: AsyncRead + AsyncWrite + HyperConnection + Unpin + Send + 'static,
     {
-        let mut settings = Builder::new()
+        let mut settings = Builder::new();
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            settings.executor(wasm::Executor);
+        }
+        #[cfg(feature = "transport")]
+        {
+            settings.http2_keep_alive_interval(endpoint.http2_keep_alive_interval);
+            if let Some(val) = endpoint.http2_keep_alive_timeout {
+                settings.http2_keep_alive_timeout(val);
+            }
+
+            if let Some(val) = endpoint.http2_keep_alive_while_idle {
+                settings.http2_keep_alive_while_idle(val);
+            }
+        }
+
+        settings
             .http2_initial_stream_window_size(endpoint.init_stream_window_size)
             .http2_initial_connection_window_size(endpoint.init_connection_window_size)
-            .http2_only(true)
-            .http2_keep_alive_interval(endpoint.http2_keep_alive_interval)
-            .clone();
-
-        if let Some(val) = endpoint.http2_keep_alive_timeout {
-            settings.http2_keep_alive_timeout(val);
-        }
-
-        if let Some(val) = endpoint.http2_keep_alive_while_idle {
-            settings.http2_keep_alive_while_idle(val);
-        }
+            .http2_only(true);
 
         let stack = ServiceBuilder::new()
             .layer_fn(|s| AddOrigin::new(s, endpoint.uri.clone()))
@@ -78,6 +102,7 @@ impl Connection {
         Self::new(connector, endpoint, false).ready_oneshot().await
     }
 
+    #[cfg(feature = "transport")]
     pub(crate) fn lazy<C>(connector: C, endpoint: Endpoint) -> Self
     where
         C: Service<Uri> + Send + 'static,

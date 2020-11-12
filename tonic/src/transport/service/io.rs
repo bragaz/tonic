@@ -1,6 +1,9 @@
-use crate::transport::{server::Connected, Certificate};
+#[cfg(feature = "transport")]
+use crate::transport::Certificate;
+use crate::transport::Connected;
 use hyper::client::connect::{Connected as HyperConnected, Connection};
 use std::io;
+#[cfg(feature = "transport")]
 use std::net::SocketAddr;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -61,14 +64,17 @@ pub(in crate::transport) trait ConnectedIo: Io + Connected {}
 
 impl<T> ConnectedIo for T where T: Io + Connected {}
 
+#[cfg(feature = "transport")]
 pub(crate) struct ServerIo(Pin<Box<dyn ConnectedIo>>);
 
+#[cfg(feature = "transport")]
 impl ServerIo {
     pub(in crate::transport) fn new<I: ConnectedIo>(io: I) -> Self {
         ServerIo(Box::pin(io))
     }
 }
 
+#[cfg(feature = "transport")]
 impl Connected for ServerIo {
     fn remote_addr(&self) -> Option<SocketAddr> {
         (&*self.0).remote_addr()
@@ -79,6 +85,7 @@ impl Connected for ServerIo {
     }
 }
 
+#[cfg(feature = "transport")]
 impl AsyncRead for ServerIo {
     fn poll_read(
         mut self: Pin<&mut Self>,
@@ -89,6 +96,7 @@ impl AsyncRead for ServerIo {
     }
 }
 
+#[cfg(feature = "transport")]
 impl AsyncWrite for ServerIo {
     fn poll_write(
         mut self: Pin<&mut Self>,

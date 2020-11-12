@@ -108,6 +108,7 @@ impl Channel {
     ///
     /// This creates a [`Channel`] that will load balance accross all the
     /// provided endpoints.
+    #[cfg(feature = "transport")]
     pub fn balance_list(list: impl Iterator<Item = Endpoint>) -> Self {
         let (channel, mut tx) = Self::balance_channel(DEFAULT_BUFFER_SIZE);
         list.for_each(|endpoint| {
@@ -121,6 +122,7 @@ impl Channel {
     /// Balance a list of [`Endpoint`]'s.
     ///
     /// This creates a [`Channel`] that will listen to a stream of change events and will add or remove provided endpoints.
+    #[cfg(feature = "transport")]
     pub fn balance_channel<K>(capacity: usize) -> (Self, Sender<Change<K, Endpoint>>)
     where
         K: Hash + Eq + Send + Clone + 'static,

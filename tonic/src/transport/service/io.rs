@@ -1,4 +1,4 @@
-use crate::transport::{server::Connected, Certificate};
+use crate::transport::{Certificate, Connected};
 use hyper::client::connect::{Connected as HyperConnected, Connection};
 use std::io;
 use std::net::SocketAddr;

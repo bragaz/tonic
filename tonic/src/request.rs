@@ -1,10 +1,10 @@
 use crate::metadata::MetadataMap;
-#[cfg(feature = "transport")]
+#[cfg(any(feature = "transport", feature = "client"))]
 use crate::transport::Certificate;
 use futures_core::Stream;
 use http::Extensions;
 use std::net::SocketAddr;
-#[cfg(feature = "transport")]
+#[cfg(any(feature = "transport", feature = "client"))]
 use std::sync::Arc;
 
 /// A gRPC request and metadata from an RPC call.
@@ -18,7 +18,7 @@ pub struct Request<T> {
 #[derive(Clone)]
 pub(crate) struct ConnectionInfo {
     pub(crate) remote_addr: Option<SocketAddr>,
-    #[cfg(feature = "transport")]
+    #[cfg(any(feature = "transport", feature = "client"))]
     pub(crate) peer_certs: Option<Arc<Vec<Certificate>>>,
 }
 

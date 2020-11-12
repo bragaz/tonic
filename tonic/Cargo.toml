@@ -26,6 +26,15 @@ keywords = ["rpc", "grpc", "async", "futures", "protobuf"]
 default = ["transport", "codegen", "prost"]
 codegen = ["async-trait"]
 transport = [
+    "hyper/default",
+    "hyper/stream",
+    "tokio",
+    "tower",
+    "tower-balance",
+    "tower-load",
+    "tracing-futures",
+]
+client = [
     "hyper",
     "tokio",
     "tower",
@@ -64,8 +73,8 @@ prost-derive = { version = "0.6", optional = true }
 async-trait = { version = "0.1.13", optional = true }
 
 # transport
-hyper = { version = "0.13.4", features = ["stream"], optional = true }
-tokio = { version = "0.2.13", features = ["tcp"], optional = true }
+hyper = { version = "0.13.4", default-features = false, optional = true }
+tokio = { version = "0.2.13", optional = true }
 tower = { version = "0.3", optional = true}
 tower-make = { version = "0.3", features = ["connect"] }
 tower-balance =  { version = "0.3", optional = true }
@@ -75,6 +84,9 @@ tracing-futures = { version = "0.2", optional = true }
 # rustls
 tokio-rustls = { version = "0.14", optional = true }
 rustls-native-certs = { version = "0.4", optional = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-futures = "0.4.18"
 
 [dev-dependencies]
 tokio = { version = "0.2", features = ["rt-core", "macros"] }

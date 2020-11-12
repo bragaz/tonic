@@ -29,6 +29,7 @@ impl<K: Hash + Eq + Clone> DynamicServiceStream<K> {
     }
 }
 
+#[cfg(feature = "transport")]
 impl<K: Hash + Eq + Clone> Discover for DynamicServiceStream<K> {
     type Key = K;
     type Service = Connection;

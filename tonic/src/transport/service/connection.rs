@@ -28,6 +28,22 @@ pub(crate) struct Connection {
     inner: BoxService<Request, Response, crate::Error>,
 }
 
+#[cfg(target_arch = "wasm32")]
+mod wasm {
+    use std::future::Future;
+    use std::pin::Pin;
+
+    type BoxSendFuture = Pin<Box<dyn Future<Output = ()> + Send>>;
+
+    pub struct Executor;
+
+    impl hyper::rt::Executor<BoxSendFuture> for Executor {
+        fn execute(&self, fut: BoxSendFuture) {
+            wasm_bindgen_futures::spawn_local(fut)
+        }
+    }
+}
+
 impl Connection {
     pub(crate) fn new<C>(connector: C, endpoint: Endpoint) -> Result<Self, crate::Error>
     where
@@ -40,16 +56,21 @@ impl Connection {
             .http2_initial_stream_window_size(endpoint.init_stream_window_size)
             .http2_initial_connection_window_size(endpoint.init_connection_window_size)
             .http2_only(true)
-            .http2_keep_alive_interval(endpoint.http2_keep_alive_interval)
+            // .http2_keep_alive_interval(endpoint.http2_keep_alive_interval)
             .clone();
 
-        if let Some(val) = endpoint.http2_keep_alive_timeout {
-            settings.http2_keep_alive_timeout(val);
+        #[cfg(target_arch = "wasm32")]
+        {
+            settings.executor(wasm::Executor);
         }
 
-        if let Some(val) = endpoint.http2_keep_alive_while_idle {
-            settings.http2_keep_alive_while_idle(val);
-        }
+        // if let Some(val) = endpoint.http2_keep_alive_timeout {
+        //     settings.http2_keep_alive_timeout(val);
+        // }
+
+        // if let Some(val) = endpoint.http2_keep_alive_while_idle {
+        //     settings.http2_keep_alive_while_idle(val);
+        // }
 
         let settings = settings.clone();
 

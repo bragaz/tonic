@@ -56,21 +56,23 @@ impl Connection {
             .http2_initial_stream_window_size(endpoint.init_stream_window_size)
             .http2_initial_connection_window_size(endpoint.init_connection_window_size)
             .http2_only(true)
-            // .http2_keep_alive_interval(endpoint.http2_keep_alive_interval)
             .clone();
 
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            settings.http2_keep_alive_interval(endpoint.http2_keep_alive_interval);
+            if let Some(val) = endpoint.http2_keep_alive_timeout {
+                settings.http2_keep_alive_timeout(val);
+            }
+
+            if let Some(val) = endpoint.http2_keep_alive_while_idle {
+                settings.http2_keep_alive_while_idle(val);
+            }
+        }
         #[cfg(target_arch = "wasm32")]
         {
             settings.executor(wasm::Executor);
         }
-
-        // if let Some(val) = endpoint.http2_keep_alive_timeout {
-        //     settings.http2_keep_alive_timeout(val);
-        // }
-
-        // if let Some(val) = endpoint.http2_keep_alive_while_idle {
-        //     settings.http2_keep_alive_while_idle(val);
-        // }
 
         let settings = settings.clone();
 

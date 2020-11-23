@@ -58,7 +58,7 @@ impl Connection {
             .http2_only(true)
             .clone();
 
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(feature = "transport")]
         {
             settings.http2_keep_alive_interval(endpoint.http2_keep_alive_interval);
             if let Some(val) = endpoint.http2_keep_alive_timeout {

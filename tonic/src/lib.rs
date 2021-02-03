@@ -106,6 +106,11 @@ pub use status::{Code, Status};
 
 pub(crate) type Error = Box<dyn std::error::Error + Send + Sync>;
 
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) use tokio::spawn;
+#[cfg(target_arch = "wasm32")]
+pub(crate) use wasm_bindgen_futures::spawn_local as spawn;
+
 #[doc(hidden)]
 #[cfg(feature = "codegen")]
 #[cfg_attr(docsrs, doc(cfg(feature = "codegen")))]

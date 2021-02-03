@@ -148,7 +148,8 @@ impl Channel {
         let buffer_size = endpoint.buffer_size.clone().unwrap_or(DEFAULT_BUFFER_SIZE);
 
         let svc = Connection::lazy(connector, endpoint);
-        let svc = Buffer::new(Either::A(svc), buffer_size);
+        let (svc, worker) = Buffer::pair(Either::A(svc), buffer_size);
+        crate::spawn(worker);
 
         Channel { svc }
     }
@@ -165,7 +166,8 @@ impl Channel {
         let svc = Connection::connect(connector, endpoint)
             .await
             .map_err(super::Error::from_source)?;
-        let svc = Buffer::new(Either::A(svc), buffer_size);
+        let (svc, worker) = Buffer::pair(Either::A(svc), buffer_size);
+        crate::spawn(worker);
 
         Ok(Channel { svc })
     }
@@ -180,7 +182,8 @@ impl Channel {
         let svc = Balance::new(discover);
 
         let svc = BoxService::new(svc);
-        let svc = Buffer::new(Either::B(svc), buffer_size);
+        let (svc, worker) = Buffer::pair(Either::B(svc), buffer_size);
+        crate::spawn(worker);
 
         Channel { svc }
     }

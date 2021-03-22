@@ -73,7 +73,7 @@ async-trait = { version = "0.1.13", optional = true }
 
 # transport
 h2    = { version = "0.3.1", optional = true }
-hyper = { version = "0.14.2", default-features = false, optional = true }
+hyper = { version = "0.14.2", features = ["client", "http1", "tcp"], optional = true }
 tokio = { version = "1.0.1", features = ["sync", "rt"], optional = true }
 tokio-stream = "0.1"
 tower = { version = "0.4.4", features = ["balance", "buffer", "discover", "limit", "load", "make", "timeout", "util"], optional = true }
